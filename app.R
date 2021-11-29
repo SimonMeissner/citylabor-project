@@ -5,17 +5,19 @@
 library(shiny)
 library(shinythemes)
 
-plant_data <- read.csv("test/test_data.csv", header=TRUE)
+plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
+
 
 
   # Define UI
   ui <- fluidPage(theme = shinytheme("cerulean"),
     navbarPage(
       # theme = "cerulean",  #To use a theme, uncomment this
-      "Urban Garden App",
+      title = "Urban Garden App",
+      id = "navbar",
       
       # Page1, used as a welcome landing page with descriptions and redirecting features for the user 
-      tabPanel("Welcome",
+      tabPanel( title = "Welcome", value = "tab1",
                mainPanel(
                  
                   h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
@@ -24,24 +26,25 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE)
                     It could be used to describe our app and suggests the user
                     to use one of the two options."),
                   
-                  radioButtons("redirect","Choose one of the Options:",
-                               choices = list("What to plant" = 1, "When to plant" = 2)),
+                  actionButton("redirect1", "What to plant"),
+                  
+                  actionButton("redirect2", "When to plant"),
                   p("By clicking one of the options the user gets redirected to the different pages")
                )
                
       ), # end Page1
       
       # Page2, used for providing the "When to plant" service
-      tabPanel("What to plant!",
+      tabPanel( title = "What to plant!", value = "tab2",
                sidebarPanel(
                  tags$h3("What can i plant?"),
-                 textInput("space", "How much space is available:", ""),
+                 textInput("space", "How much space is available: (square inch)", ""),
                  # Select growth range
                  dateRangeInput("growthrange", strong("Select timeframe from planting to harvesting"), start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
                  # dateInput("timep", "When to plant:", ""),
                  # dateInput("timeh", "When to harvest:", ""),
-                 submitButton(text = "Submit")
+                 actionButton(inputId = "data1", label = "Submit")
                  
                ), # sidebarPanel
                
@@ -52,22 +55,23 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE)
                  h2("Results:"),
                  h4("lists possible plants ordered by success rate!"),
                  
-                 dataTableOutput("plants"),
+                 verbatimTextOutput("plants"),
                  
                ) # mainPanel
                
       ), # end Page2
       
       # Page3, used for providing the "What to plant" service
-      tabPanel("When to plant!",
+      tabPanel( title = "When to plant!", value = "tab3",
                sidebarPanel(
-                 tags$h3("When can i plant?"),
+                 tags$h3("When can I plant?"),
+                
                  
                  # Select type of plant
-                 selectInput(inputId = "plant", label = strong("Select Plant:"),
-                             choices = unique(plant_data$plant_name),
+                 selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name),
+                  
                   ),
-                 submitButton(text = "Submit")
+                 actionButton(inputId = "data2",label = "Submit")
                  
                ), # sidebarPanel
                
@@ -76,7 +80,7 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE)
                  h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
                  h2("Results:"),
                  h4("returns possibly planting and harvest times for your plant in addition to the required space"),
-                 verbatimTextOutput("timesAndSpace"),
+                 tableOutput("timesAndSpace")
                  
                ) # mainPanel
                
@@ -86,17 +90,37 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE)
 
   
   # Define server function  
-  server <- function(input, output) {
+  server <- function(input, output, session) {
     
-    output$plants <- renderDataTable( plant_data,
-      options = list(
-        pageLength = 5
-      )
-      
-    )
+    #only submit data when submit button is pressed
+    data1 <- eventReactive(input$data1, { c(input$space,input$growthrange)}) 
     
-      
+    data2 <- eventReactive(input$data2, { subset(plant_data, plant_name == input$plant) }) 
+    #
+    
+    
+    
+    # outputs of the two pages
+    output$plants <- renderText( data1())
+    
+    output$timesAndSpace <- renderTable(data2(), rownames = TRUE)
+    #
+    
+    
+    #handle redirect
+    observeEvent(input$redirect1,
+                 {
+                   updateNavbarPage(session, "navbar",
+                                    selected = "tab2")
+                 })
+    observeEvent(input$redirect2,
+                 {
+                   updateNavbarPage(session, "navbar",
+                                    selected = "tab3")
+                 })
+    #
   }
+    
   
 
   # Create Shiny object
