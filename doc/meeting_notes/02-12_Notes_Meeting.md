@@ -13,7 +13,7 @@
 ## Notes 
 1. Set agenda
 2. Review To-Do List
-  * @ Huriel: ask friend from landscape ecology if he has some sort of database.
+	* @ Huriel: ask friend from landscape ecology if he has some sort of database.
 	* @ Jonas will contact some people from landscape ecology and Jonas Runthe's email address. 
 	* @ Merel will set up the user stories
 	* @ Simon+Huriel: Simplify the Köpengeiger climate classification and add this as a column in the dataset. 
@@ -25,5 +25,5 @@
 4. DB structure
 5. Model
 6. Model implementation
-8. Next sprint: presentation 
-9. Update To-Do's
+7. Next sprint: presentation 
+8. Update To-Do's
