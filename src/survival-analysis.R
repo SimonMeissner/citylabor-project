@@ -1,4 +1,4 @@
-## ref = https://rviews.rstudio.com/2017/09/25/survival-analysis-with-r/
+# ref = https://rviews.rstudio.com/2017/09/25/survival-analysis-with-r/
 library(survival)
 library(ranger)
 library(ggplot2)
@@ -8,36 +8,14 @@ library(dplyr)
 plants <- read.table('plants.csv', sep = ',', header = T)
 
 # TEMPORARILY excluding non-usable data
-plants <- plants[,1:5]
-colnames(plants) <- c('name', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t')
+plants <- plants[,1:6]
+colnames(plants) <- c('name', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest')
 
 # mean survival time (discussion required)
 plants$time <- as.numeric(( plants$max_grow_t + plants$min_grow_t ) / 2)
 
-# Kaplan Meier Analysis
-km <- with(plants, Surv(time))
-km_fit <- survfit(Surv(time) ~ 1, data=plants)
-summary(km_fit, times = c(1, 30, 60, 90 * (1:10)))
-plot(km_fit, xlab="Days", main = 'Kaplan Meyer Plot')
-
-# Kaplan Meier Analysis by 'space'
-km_name_fit <- survfit(Surv(time) ~ space, data=plants)
-plot(km_name_fit, xlab="Days", main = 'Kaplan Meyer Plot') # too few data (check auto-plot)
-
 plants_mut <- mutate(plants, space = ifelse((space < 77), "LT77", "OV77"), #77 is mean space
                       space = factor(space))
-km_space_fit <- survfit(Surv(time) ~ space, data=plants_mut)
-plot(km_space_fit, xlab="Days", main = 'Kaplan Meyer Plot')
-
-# Cox Proportional Hazards Model
-cox <- coxph(Surv(time) ~ space + when_to_plant + min_grow_t + max_grow_t, data = plants_mut)
-
-cox_fit <- survfit(cox)
-plot(cox_fit, main = "cph model", xlab="Days")
-aa_fit <-aareg(Surv(time) ~ space + min_grow_t + max_grow_t, #attention, time-demanding!
-                data = plants_mut)
-plot(aa_fit)
-summary(aa_fit)
 
 # Random Forest Ensemble Model for Prob. of Survival
 r_fit <- ranger(Surv(time) ~ space + min_grow_t + max_grow_t,
@@ -75,4 +53,60 @@ head(vi)
 # Area under ROC
 cat("Prediction Error = 1 - Harrell's c-index = ", r_fit$prediction.error)
 
+##############
 
+# using user data 
+
+wtp = "02.05.2021" #user defined
+wth = "01.07.2021" #user defined
+wtp <- as.Date(wtp, '%d.%m.%Y')
+wth <- as.Date(wth, '%d.%m.%Y')
+
+gt = as.integer(wth - wtp)
+
+dt <- c()
+for (i in 1:length(death_times)){
+  dt[i] <- abs(death_times[i] - gt)
+}
+
+min_dt <- min(dt)
+for (i in 1:length(death_times)){
+  if (dt[i] == min(dt)){
+    item = i
+  }
+}
+
+wtp = as.integer(format(wtp, "%m"))
+wth = as.integer(format(wth, "%m"))    
+
+#final filtering
+f <- surv_prob[,item]
+
+ls <- c()
+for ( i in 1:length(f)){
+  if (f[i] > 0.65){
+    ls <- c(ls, i)
+  }
+}
+ls
+
+nls <- c()
+for ( i in ls){
+  #print(grepl(wtp, plants[ls[i], 3]) == 1 & grepl(wth, plants[ls[i], 6]) == 1)
+  if (grepl(wtp, plants[i, 3]) == 1 & grepl(wth, plants[i, 6]) == 1) {
+    nls <- c(nls, i)
+  }
+}
+nls
+
+for (i in 1:length(nls)){
+    cat(
+      plants[nls[i], 1],
+      "with",
+      as.character(round(surv_prob[nls[i],item], 2)*100),
+      "% chance of success!",
+      "\n"
+    ) 
+}
+
+plants <- plants[nls,]
