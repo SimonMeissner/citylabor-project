@@ -56,12 +56,12 @@ cat("Prediction Error = 1 - Harrell's c-index = ", r_fit$prediction.error)
 ##############
 
 # using user data 
+size = 40 #squared inches size #user defined
 
-wtp = "02.05.2021" #user defined
-wth = "01.07.2021" #user defined
+wtp = "01.06.2021" #user defined
+wth = "01.08.2021" #user defined
 wtp <- as.Date(wtp, '%d.%m.%Y')
 wth <- as.Date(wth, '%d.%m.%Y')
-
 gt = as.integer(wth - wtp)
 
 dt <- c()
@@ -84,7 +84,7 @@ f <- surv_prob[,item]
 
 ls <- c()
 for ( i in 1:length(f)){
-  if (f[i] > 0.65){
+  if (f[i] > 0.6){
     ls <- c(ls, i)
   }
 }
@@ -92,21 +92,41 @@ ls
 
 nls <- c()
 for ( i in ls){
-  #print(grepl(wtp, plants[ls[i], 3]) == 1 & grepl(wth, plants[ls[i], 6]) == 1)
+
   if (grepl(wtp, plants[i, 3]) == 1 & grepl(wth, plants[i, 6]) == 1) {
+
     nls <- c(nls, i)
+
   }
 }
 nls
 
-for (i in 1:length(nls)){
+plants <- plants[nls,]
+plants$surv_p <- round(surv_prob[nls, item], 2)*100
+plants <- plants[which(plants$min_grow_t <= gt + 15 & plants$max_grow_t >= gt - 15), ]
+plants <- plants[which(plants$space <= size + 15 ),]
+if ( is.null(plants) == 1){
+
+  print("Sorry, no recommendations for you. Please try other dates.")
+
+}else{
+
+  for (i in 1:nrow(plants)){
     cat(
-      plants[nls[i], 1],
-      "with",
-      as.character(round(surv_prob[nls[i],item], 2)*100),
+      "We recommend you ",
+      plants[i, 1],
+      "with a",
+      as.character(plants[i,'surv_p']),
       "% chance of success!",
-      "\n"
+      "You're harvesting between", plants[i, 4], "and", plants[i, 5], "days, approximatedly", 
+      "\n\n"
     ) 
+  }
 }
 
-plants <- plants[nls,]
+plants
+# get user's location
+
+# get user's climate
+
+# recommend based on climate printing min and max growing time
