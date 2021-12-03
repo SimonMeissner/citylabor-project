@@ -3,6 +3,7 @@ library(survival)
 library(ranger)
 library(ggplot2)
 library(dplyr)
+library(raster)
 
 # read jointly created vegetables table
 plants <- read.table('plants.csv', sep = ',', header = T)
@@ -55,11 +56,16 @@ cat("Prediction Error = 1 - Harrell's c-index = ", r_fit$prediction.error)
 
 ##############
 
-# using user data 
-size = 40 #squared inches size #user defined
+# using user data
+xy <- c(51.95031, 7.55539)
+kg <- raster('climate.tif')
+user_clim <- extract(kg, xy)
+#transform climate -- missing
 
-wtp = "01.06.2021" #user defined
-wth = "01.08.2021" #user defined
+size = 77 #squared inches size #user defined
+
+wtp = "01.04.2021" #user defined
+wth = "15.05.2021" #user defined
 wtp <- as.Date(wtp, '%d.%m.%Y')
 wth <- as.Date(wth, '%d.%m.%Y')
 gt = as.integer(wth - wtp)
@@ -101,32 +107,34 @@ for ( i in ls){
 }
 nls
 
-plants <- plants[nls,]
-plants$surv_p <- round(surv_prob[nls, item], 2)*100
-plants <- plants[which(plants$min_grow_t <= gt + 15 & plants$max_grow_t >= gt - 15), ]
-plants <- plants[which(plants$space <= size + 15 ),]
-if ( is.null(plants) == 1){
+prd <- plants[nls,]
+prd$surv_p <- round(surv_prob[nls, item], 2)*100
+prd <- prd[which(prd$min_grow_t <= gt + 15 & prd$max_grow_t >= gt - 15), ]
+prd <- prd[which(prd$space <= size + 50 ),]
+if ( nrow(prd) == 0){
 
   print("Sorry, no recommendations for you. Please try other dates.")
 
 }else{
 
-  for (i in 1:nrow(plants)){
+  for (i in 1:nrow(prd)){
     cat(
       "We recommend you ",
-      plants[i, 1],
+      prd[i, 1],
       "with a",
-      as.character(plants[i,'surv_p']),
+      as.character(prd[i,'surv_p']),
       "% chance of success!",
-      "You're harvesting between", plants[i, 4], "and", plants[i, 5], "days, approximatedly", 
+      "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", 
       "\n\n"
     ) 
   }
 }
 
-plants
+prd
 # get user's location
 
-# get user's climate
+# get user's climate and transform to simplified climate
 
-# recommend based on climate printing min and max growing time
+# train survival with climate
+
+# recommend based on climate
