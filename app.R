@@ -1,9 +1,15 @@
-# Concepts about Reactive programming used by Shiny, 
 # https://shiny.rstudio.com/articles/reactivity-overview.html
 
-# Load R packages
+
+# install R packages
+
+
+
+# load R packages
 library(shiny)
 library(shinythemes)
+
+
 
 plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
 
@@ -29,7 +35,31 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                   actionButton("redirect1", "What to plant"),
                   
                   actionButton("redirect2", "When to plant"),
-                  p("By clicking one of the options the user gets redirected to the different pages")
+                  p("By clicking one of the options the user gets redirected to the different pages"),
+                  
+                  h1("Testing Location api",style = "font-weight: 500; color: red"),
+                  
+                  
+                  tags$script('
+                    $(document).ready(function () {
+                          navigator.geolocation.getCurrentPosition(onSuccess, onError);
+
+                          function onError (err) {
+                            Shiny.onInputChange("geolocation", false);
+                          }
+
+                          function onSuccess (position) {
+                              setTimeout(function () {
+                                  var coords = position.coords;
+                                  console.log(coords.latitude + ", " + coords.longitude);
+                                  Shiny.onInputChange("geolocation", true);
+                                  Shiny.onInputChange("lat", coords.latitude);
+                                  Shiny.onInputChange("long", coords.longitude);
+                              }, 1100)
+                          }
+                    });
+                  '),
+                  verbatimTextOutput("location")
                )
                
       ), # end Page1
@@ -57,6 +87,8 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                  
                  verbatimTextOutput("plants"),
                  
+                 
+                 
                ) # mainPanel
                
       ), # end Page2
@@ -80,8 +112,11 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                  h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
                  h2("Results:"),
                  h4("returns possibly planting and harvest times for your plant in addition to the required space"),
-                 tableOutput("timesAndSpace")
+                 tableOutput("timesAndSpace"),
                  
+                 
+                 
+                
                ) # mainPanel
                
       ) # end Page3
@@ -98,13 +133,18 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
     data2 <- eventReactive(input$data2, { subset(plant_data, plant_name == input$plant) }) 
     #
     
+    latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)}) 
     
     
     # outputs of the two pages
     output$plants <- renderText( data1())
     
-    output$timesAndSpace <- renderTable(data2(), rownames = TRUE)
+    output$timesAndSpace <- renderTable( data2(), rownames = TRUE)
     #
+    
+    #location api request
+    output$location <- renderText( latLongStatus())
+    
     
     
     #handle redirect
@@ -119,6 +159,9 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                                     selected = "tab3")
                  })
     #
+    
+    
+    
   }
     
   
