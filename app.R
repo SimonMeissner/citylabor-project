@@ -15,10 +15,15 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
 
 
 
-  # Define UI
+  # UI -------------------------------------------------------------------------------------------
   ui <- fluidPage(theme = shinytheme("cerulean"),
+                  tags$head(includeHTML(("www/geolocation.html"))),
+                  
+                  
     navbarPage(
-      # theme = "cerulean",  #To use a theme, uncomment this
+      
+      
+
       title = "Urban Garden App",
       id = "navbar",
       
@@ -40,25 +45,7 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                   h1("Testing Location api",style = "font-weight: 500; color: red"),
                   
                   
-                  tags$script('
-                    $(document).ready(function () {
-                          navigator.geolocation.getCurrentPosition(onSuccess, onError);
-
-                          function onError (err) {
-                            Shiny.onInputChange("geolocation", false);
-                          }
-
-                          function onSuccess (position) {
-                              setTimeout(function () {
-                                  var coords = position.coords;
-                                  console.log(coords.latitude + ", " + coords.longitude);
-                                  Shiny.onInputChange("geolocation", true);
-                                  Shiny.onInputChange("lat", coords.latitude);
-                                  Shiny.onInputChange("long", coords.longitude);
-                              }, 1100)
-                          }
-                    });
-                  '),
+                  
                   verbatimTextOutput("location")
                )
                
@@ -66,17 +53,22 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
       
       # Page2, used for providing the "When to plant" service
       tabPanel( title = "What to plant!", value = "tab2",
-               sidebarPanel(
-                 tags$h3("What can i plant?"),
+               sidebarLayout(
+                sidebarPanel(
+                 tags$h3("What can I plant?"),
                  textInput("space", "How much space is available: (square inch)", ""),
                  # Select growth range
                  dateRangeInput("growthrange", strong("Select timeframe from planting to harvesting"), start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
                  # dateInput("timep", "When to plant:", ""),
                  # dateInput("timeh", "When to harvest:", ""),
-                 actionButton(inputId = "data1", label = "Submit")
+                 actionButton(inputId = "data1", label = "Submit"),
+                 tags$img(height = 500, width = 500,src = "map.png"),
                  
-               ), # sidebarPanel
+                 
+               ), 
+               
+               # sidebarPanel
                
                mainPanel( # mainPanel used for outputting results
                  
@@ -90,12 +82,13 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                  
                  
                ) # mainPanel
-               
+              ) # sidebarLayout
       ), # end Page2
       
       # Page3, used for providing the "What to plant" service
       tabPanel( title = "When to plant!", value = "tab3",
-               sidebarPanel(
+               sidebarLayout(
+                sidebarPanel(
                  tags$h3("When can I plant?"),
                 
                  
@@ -103,7 +96,8 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                  selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name),
                   
                   ),
-                 actionButton(inputId = "data2",label = "Submit")
+                 actionButton(inputId = "data2",label = "Submit"),
+                 tags$img(height = 500, width = 500,src = "map.png"),
                  
                ), # sidebarPanel
                
@@ -118,13 +112,13 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                  
                 
                ) # mainPanel
-               
+              ) # sidebarLayout
       ) # end Page3
     ) # navbarPage
   ) # fluidPage
 
   
-  # Define server function  
+  # Server -------------------------------------------------------------------------------- 
   server <- function(input, output, session) {
     
     #only submit data when submit button is pressed
