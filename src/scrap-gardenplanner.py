@@ -143,7 +143,7 @@ for plants in card:
 
 links = list(map(''.join, zip((['https://gardenplanner.almanac.com'] * len(links)), [item for sublist in links for item in sublist])))
 
-#df01 = scrap("Baldwin Street, Jacksonville, USA", "Cfa")
+df01 = scrap("Baldwin Street, Jacksonville, USA", "Cfa")
 df01.to_csv('plants_01.csv')
 df02 = scrap("South May Street, Chicago, USA", "Dfa")
 df02.to_csv('plants_02.csv')
