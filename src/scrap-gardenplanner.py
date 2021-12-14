@@ -84,15 +84,46 @@ def scrap(address, climate):
         when_plant = list(filter(lambda a: a !=0, when_plant))
         when_harvest = list(filter(lambda a: a !=0, when_harvest))
 
-        try:
+        if len(when_plant) == 0 or len(when_harvest) == 0:
+
+                min_g_t.append(0)
+                max_g_t.append(0)
+
+        elif min(when_plant) == min(when_harvest):
+
+            try:
+
+                min_g_t.append( abs((min(when_plant) - when_harvest[1] ) * 30) )
+                max_g_t.append( abs((min(when_plant) - max(when_harvest) ) * 30) )
+
+            except:
+
+                min_g_t.append(0)
+                max_g_t.append(0)
+
+        elif min(when_harvest) < min(when_plant):
+
+            try:
+
+                min_g_t.append( (12 - min(when_plant) + when_harvest[1] ) * 30) 
+                max_g_t.append( (12 - min(when_plant) + max(when_harvest) ) * 30) 
+
+            except:
+
+                min_g_t.append(0)
+                max_g_t.append(0)
+
+        else:
+
+            try:
             
-            min_g_t.append( abs((min(when_plant) - min(when_harvest) ) * 30) )
-            max_g_t.append( abs((min(when_plant) - max(when_harvest) ) * 30) )
+                min_g_t.append( abs((min(when_plant) - min(when_harvest) ) * 30) )
+                max_g_t.append( abs((min(when_plant) - max(when_harvest) ) * 30) )
 
-        except:
-
-            min_g_t.append(0)
-            max_g_t.append(0)
+            except:
+            
+                min_g_t.append(0)
+                max_g_t.append(0)
 
         wtp_list.append((str(when_plant)).replace("[", "").replace("]", ""))
         wth_list.append((str(when_harvest)).replace("[", "").replace("]", ""))
@@ -108,13 +139,13 @@ def scrap(address, climate):
 
         except:
 
-            size[i] = 0
+            size[i] = (int(space[i].split("(")[1][:1])*100) * (int(space[i].split("(")[2][:-2][:1]))
 
     space = []
     clim = [climate for i in range(len(links))]
 
-    df = pd.DataFrame({'plant_name':names,'links':links, 'required_space':size, 'when_to_plant': wtp_list, 'min_growing_time': min_g_t, 'max_growing_time': max_g_t,
-                       'when_to_harvest': wth_list, 'climate':clim})
+    df = pd.DataFrame({   'plant_name':names,'links':links,
+        'required_space':size, 'when_to_plant': wtp_list, 'min_growing_time': min_g_t, 'max_growing_time': max_g_t, 'when_to_harvest': wth_list, 'climate':clim})
 
     return df
 # end of function
@@ -143,29 +174,29 @@ for plants in card:
 
 links = list(map(''.join, zip((['https://gardenplanner.almanac.com'] * len(links)), [item for sublist in links for item in sublist])))
 
-df01 = scrap("Baldwin Street, Jacksonville, USA", "Cfa")
-df01.to_csv('plants_01.csv')
-df02 = scrap("South May Street, Chicago, USA", "Dfa")
-df02.to_csv('plants_02.csv')
-df03 = scrap("Lincoln Park Drive, Duluth, USA", "Dfb")
-df03.to_csv('plants_03.csv')
-df04 = scrap("Simpson Avenue, Churchill, Canada", "Dfc")
-##df04.to_csv('plants_04.csv')
-df05 = scrap("Rue Principale, Ivuljivik, Canada", "ET")
-##df05.to_csv('plants_05.csv')
+#df01 = scrap("Baldwin Street, Jacksonville, USA", "Cfa")
+#df01.to_csv('plants_01.csv')
+#df02 = scrap("South May Street, Chicago, USA", "Dfa")
+#df02.to_csv('plants_02.csv')
+#df03 = scrap("Lincoln Park Drive, Duluth, USA", "Dfb")
+#df03.to_csv('plants_03.csv')
+#df04 = scrap("Simpson Avenue, Churchill, Canada", "Dfc")
+###df04.to_csv('plants_04.csv')
+#df05 = scrap("Rue Principale, Ivuljivik, Canada", "ET")
+###df05.to_csv('plants_05.csv')
 df06 = scrap("South Austin Street, Amarillo, USA", "BSk")
 df06.to_csv('plants_06.csv')
 df07 = scrap("Lyon Street, Albany, USA", "Csb")
 df07.to_csv('plants_07.csv')
-df08 = scrap("East Lindo Ave, Chico, USA", "Csa")
+df08 = scrap("East Lindo Ave, Chico, USA", "Csa")#
 df08.to_csv('plants_08.csv')
 df09 = scrap("Nola Street, Fallon, USA", "BWk")
 df09.to_csv('plants_09.csv')
-##df10 = scrap("Calle Carlos Romo, Tlapacoyan, MEX", "Cfb")
-##df10.to_csv('plants_10.csv')
+#df10 = scrap("Calle Carlos Romo, Tlapacoyan, MEX", "Cfb")
+#df10.to_csv('plants_10.csv')
 
-#df_scrap = pd.concat([df01, df02, df03, df04, df05, df06, df07, df08, df09, df10])
-#df_scrap.to_csv('plants_scrapped.csv')
+df_scrap = pd.concat([df01, df02, df03, df06, df07, df08, df09])
+df_scrap.to_csv('plants_scrapped.csv')
 
 print("done")
 
