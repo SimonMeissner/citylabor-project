@@ -9,10 +9,12 @@
 library(shiny)
 library(shinythemes)
 library(leaflet)
+library(leaflet.extras)
 
 
 
-plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
+plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load test plant data
+
 
 
 
@@ -154,9 +156,22 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
     #middleware to avoid duplicate code
     mapdata <- reactive({
       leaflet() %>%
-      addTiles() %>%
-        addMarkers(lng= input$long, lat= input$lat, popup="Your Location")
+      addTiles(options = tileOptions(opacity = 0.8)) %>%
+        addMarkers(lng= input$long, lat= input$lat, popup="Your Location") -> p
+      p <- p %>%
+        addDrawToolbar(
+          polylineOptions = FALSE,
+          polygonOptions = FALSE,
+          rectangleOptions = FALSE,
+          circleOptions = FALSE,
+          markerOptions = TRUE,
+          circleMarkerOptions = FALSE,
+          singleFeature = FALSE,
+          editOptions = editToolbarOptions()
+        )
     })
+    
+    
     #map on page "what to plant"
     output$map1 <- renderLeaflet({ mapdata() })
     #map on page "when to plant"
