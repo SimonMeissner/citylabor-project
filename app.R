@@ -8,6 +8,7 @@
 # load R packages
 library(shiny)
 library(shinythemes)
+library(leaflet)
 
 
 
@@ -42,6 +43,7 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                   actionButton("redirect2", "When to plant"),
                   p("By clicking one of the options the user gets redirected to the different pages"),
                   
+                  
                   h1("Testing Location api",style = "font-weight: 500; color: red"),
                   
                   
@@ -56,14 +58,17 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                sidebarLayout(
                 sidebarPanel(
                  tags$h3("What can I plant?"),
+                 
                  textInput("space", "How much space is available: (square inch)", ""),
                  # Select growth range
                  dateRangeInput("growthrange", strong("Select timeframe from planting to harvesting"), start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
-                 # dateInput("timep", "When to plant:", ""),
-                 # dateInput("timeh", "When to harvest:", ""),
+                 
+                 leafletOutput("map1"), #displaying map
+                 
+                 #submit button
                  actionButton(inputId = "data1", label = "Submit"),
-                 tags$img(height = 500, width = 500,src = "map.png"),
+                 
                  
                  
                ), 
@@ -93,11 +98,12 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
                 
                  
                  # Select type of plant
-                 selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name),
-                  
-                  ),
+                 selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
+                 
+                 leafletOutput("map2"), #displaying map
+                 # submit button
                  actionButton(inputId = "data2",label = "Submit"),
-                 tags$img(height = 500, width = 500,src = "map.png"),
+                 
                  
                ), # sidebarPanel
                
@@ -121,14 +127,15 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
   # Server -------------------------------------------------------------------------------- 
   server <- function(input, output, session) {
     
+    
+    
     #only submit data when submit button is pressed
     data1 <- eventReactive(input$data1, { c(input$space,input$growthrange)}) 
     
     data2 <- eventReactive(input$data2, { subset(plant_data, plant_name == input$plant) }) 
     #
     
-    latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)}) 
-    
+     
     
     # outputs of the two pages
     output$plants <- renderText( data1())
@@ -137,7 +144,24 @@ plant_data <- read.csv("test/test_data.csv", header=TRUE) # Load test plant data
     #
     
     #location api request
+    latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
     output$location <- renderText( latLongStatus())
+    #
+    
+    
+    
+    #map section
+    #middleware to avoid duplicate code
+    mapdata <- reactive({
+      leaflet() %>%
+      addTiles() %>%
+        addMarkers(lng= input$long, lat= input$lat, popup="Your Location")
+    })
+    #map on page "what to plant"
+    output$map1 <- renderLeaflet({ mapdata() })
+    #map on page "when to plant"
+    output$map2 <- renderLeaflet({ mapdata() })
+    #
     
     
     

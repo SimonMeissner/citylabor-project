@@ -64,8 +64,8 @@ user_clim <- extract(kg, xy)
 
 size = 77 #squared inches size #user defined
 
-wtp = "01.04.2021" #user defined
-wth = "15.05.2021" #user defined
+wtp = "03.07.2021" #user defined
+wth = "03.09.2021" #user defined
 wtp <- as.Date(wtp, '%d.%m.%Y')
 wth <- as.Date(wth, '%d.%m.%Y')
 gt = as.integer(wth - wtp)
