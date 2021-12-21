@@ -61,12 +61,15 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                 sidebarPanel(
                  tags$h3("What can I plant?"),
                  
-                 textInput("space", "How much space is available: (square inch)", ""),
+                 tags$h5(tags$b("Location: ")),
+                 leafletOutput("map1"), #displaying map
+                 
+                 textInput("space", "How much space is available:", ""),
                  # Select growth range
-                 dateRangeInput("growthrange", strong("Select timeframe from planting to harvesting"), start = NULL, end = NULL,
+                 dateRangeInput("growthrange", "Select timeframe from planting to harvesting", start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
                  
-                 leafletOutput("map1"), #displaying map
+                 
                  
                  #submit button
                  actionButton(inputId = "data1", label = "Submit"),
@@ -96,25 +99,27 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       tabPanel( title = "When to plant!", value = "tab3",
                sidebarLayout(
                 sidebarPanel(
-                 tags$h3("When can I plant?"),
+                  tags$h3("When can I plant?"),
+                 
+                  tags$h5(tags$b("Location: ")),
+                  leafletOutput("map2"), #displaying map
                 
                  
-                 # Select type of plant
-                 selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
+                  # Select type of plant
+                  selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
                  
-                 leafletOutput("map2"), #displaying map
-                 # submit button
-                 actionButton(inputId = "data2",label = "Submit"),
+                  # submit button
+                  actionButton(inputId = "data2",label = "Submit"),
                  
                  
                ), # sidebarPanel
                
                mainPanel( # mainPanel used for outputting results
                  
-                 h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
-                 h2("Results:"),
-                 h4("returns possibly planting and harvest times for your plant in addition to the required space"),
-                 tableOutput("timesAndSpace"),
+                  h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
+                  h2("Results:"),
+                  h4("returns possibly planting and harvest times for your plant in addition to the required space"),
+                  tableOutput("timesAndSpace"),
                  
                  
                  
@@ -157,8 +162,9 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     mapdata <- reactive({
       leaflet() %>%
       addTiles(options = tileOptions(opacity = 0.8)) %>%
-        addMarkers(lng= input$long, lat= input$lat, popup="Your Location") -> p
-      p <- p %>%
+        #addMarkers(lng= input$long, lat= input$lat, popup="Your Location") -> p
+      #p <- p %>%
+        setView(7.633763,51.97587, zoom = 4) %>%
         addDrawToolbar(
           polylineOptions = FALSE,
           polygonOptions = FALSE,
