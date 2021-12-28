@@ -10,6 +10,11 @@ library(shiny)
 library(shinythemes)
 library(leaflet)
 library(leaflet.extras)
+suppressPackageStartupMessages(library(survival))
+suppressPackageStartupMessages(library(ranger))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(raster))
 
 
 
