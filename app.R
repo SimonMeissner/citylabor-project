@@ -6,10 +6,10 @@
 
 
 # load R packages
-library(shiny)
-library(shinythemes)
-library(leaflet)
-library(leaflet.extras)
+suppressPackageStartupMessages(library(shiny))
+suppressPackageStartupMessages(library(shinythemes))
+suppressPackageStartupMessages(library(leaflet))
+suppressPackageStartupMessages(library(leaflet.extras))
 suppressPackageStartupMessages(library(survival))
 suppressPackageStartupMessages(library(ranger))
 suppressPackageStartupMessages(library(ggplot2))
@@ -19,6 +19,7 @@ suppressPackageStartupMessages(library(raster))
 
 
 plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load test plant data
+
 
 
 
@@ -124,6 +125,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
                   h2("Results:"),
                   h4("returns possibly planting and harvest times for your plant in addition to the required space"),
+                  
                   tableOutput("timesAndSpace"),
                  
                  
@@ -139,21 +141,39 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   # Server -------------------------------------------------------------------------------- 
   server <- function(input, output, session) {
     
+    coordinates <- reactiveValues(lat = NULL, long = NULL)
     
+    #only submit and compute data when submit button is pressed
     
-    #only submit data when submit button is pressed
     data1 <- eventReactive(input$data1, { c(input$space,input$growthrange)}) 
     
-    data2 <- eventReactive(input$data2, { subset(plant_data, plant_name == input$plant) }) 
+    data2 <- eventReactive(input$data2, {
+      
+      #get climate from user based on coordinates
+      climate <- climate("src/climate.tif", coordinates$lat, coordinates$long)
+      
+      #filter_wtp
+      filter_wtp(plant= input$plant, space=9000, clim=climate) 
+      
+    }) 
     #
     
      
     
     # outputs of the two pages
+    
+    
+    # page what to plant
     output$plants <- renderText( data1())
+    
+    
+    
+    # page when to plant
     
     output$timesAndSpace <- renderTable( data2(), rownames = TRUE)
     #
+    
+    
     
     #location api request
     latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
@@ -167,8 +187,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     mapdata <- reactive({
       leaflet() %>%
       addTiles(options = tileOptions(opacity = 0.8)) %>%
-        #addMarkers(lng= input$long, lat= input$lat, popup="Your Location") -> p
-      #p <- p %>%
+      
         setView(7.633763,51.97587, zoom = 4) %>%
         addDrawToolbar(
           polylineOptions = FALSE,
@@ -177,10 +196,49 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
           circleOptions = FALSE,
           markerOptions = TRUE,
           circleMarkerOptions = FALSE,
-          singleFeature = FALSE,
+          singleFeature = TRUE,
           editOptions = editToolbarOptions()
         )
     })
+    #observers for marker actions on map1
+    #observe new marker and save coordinates
+    observeEvent(input$map1_draw_new_feature, {
+      draw1  <- input$map1_draw_new_feature
+      coordinates$lat <- draw1$geometry$coordinates[[1]]
+      coordinates$long <- draw1$geometry$coordinates[[2]]
+      print(coordinates$lat)
+      print(coordinates$long)
+    })
+    
+    #observe marker edit and update coordinates
+    observeEvent(input$map1_draw_edited_features, {
+      draw1  <- input$map1_draw_edited_features
+      coordinates$lat <- draw1$features[[1]]$geometry$coordinates[[1]]
+      coordinates$long <- draw1$features[[1]]$geometry$coordinates[[2]]
+      print(coordinates$lat)
+      print(coordinates$long)
+    })
+    
+    
+    #observers for marker actions on map2
+    #observe new marker and save coordinates
+    observeEvent(input$map2_draw_new_feature, {
+      draw2  <- input$map2_draw_new_feature
+      coordinates$lat <- draw2$geometry$coordinates[[1]]
+      coordinates$long <- draw2$geometry$coordinates[[2]]
+      print(coordinates$lat)
+      print(coordinates$long)
+    })
+    
+    #ovserve marker edit and update coordinates
+    observeEvent(input$map2_draw_edited_features, {
+      draw2  <- input$map2_draw_edited_features
+      coordinates$lat <- draw2$features[[1]]$geometry$coordinates[[1]]
+      coordinates$long <- draw2$features[[1]]$geometry$coordinates[[2]]
+      print(coordinates$lat)
+      print(coordinates$long)
+    })
+    
     
     
     #map on page "what to plant"
@@ -190,21 +248,71 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     #
     
     
+    #map section end
+    
+    
     
     #handle redirect
-    observeEvent(input$redirect1,
-                 {
-                   updateNavbarPage(session, "navbar",
-                                    selected = "tab2")
-                 })
-    observeEvent(input$redirect2,
-                 {
-                   updateNavbarPage(session, "navbar",
-                                    selected = "tab3")
-                 })
+    observeEvent(input$redirect1,{
+      updateNavbarPage(session,"navbar",selected = "tab2") #redirect to what to plant
+    })
+    observeEvent(input$redirect2, {
+      updateNavbarPage(session,"navbar",selected = "tab3") #redirect to when to plant
+    })
     #
     
     
+    
+    
+    
+    # get climate from user depending on location 
+    climate <- function(rst, x, y) {
+      
+      xy <- data.frame(x = c(x), y = c(y))
+      kg <- raster(rst)
+      n_clim <- extract(kg, xy)
+      
+      classif <- c('Af', 'Am', 'Aw', 'BWh', 'BWk', 'BSh', 'BSk', 'Csa', 'Csb', 'Cwa', 'Cwb', 'Cwc',
+                   'Cfa', 'Cfb', 'Cfc', 'Dsa', 'Dsb', 'Dsc', 'Dsd', 'Dwa', 'Dwb', 'Dwc', 'Dwd', 'Dfa',
+                   'Dfb', 'Dfc', 'Dfd', 'ET', 'EF')
+      
+      user_clim <- classif[n_clim]
+      print("in climate()")
+      print(user_clim)
+      return (user_clim)
+      
+    }
+    
+    ########### FILTER WHEN TO PLANT ##########
+    
+    number_of_rows_in_dataset <- nrow(plant_data)
+    range <- 1:number_of_rows_in_dataset
+    Months<-c("January","February","March","April","May","June","July","August","September","October","November","December")
+    
+    filter_wtp <- function(plant, space, clim){
+      output_array <- vector()
+      for(n in range){
+        if(plant == plant_data$plant_name[n]){
+          if(plant_data$required_space[n]>space){
+            return("You do not have enough space")
+          }
+          if(plant_data$required_space[n]<=space && plant_data$climate[n] == clim) {
+            when_to_plant <- plant_data$when_to_plant[n]
+            when_to_plant <- unlist(strsplit(when_to_plant, ","))
+            when_to_plant <- as.numeric(when_to_plant)
+            for(i in when_to_plant){
+              x <- c("You can plant in ", Months[i]) 
+              output_array <- append(output_array, x) 
+              cat("You can plant in", Months[i], "\n\n")
+              
+            }
+          }
+        }
+      }
+      print("in filter_wtp()")
+      print(output_array)
+      return(output_array)
+    }
     
   }
     
