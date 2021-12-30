@@ -70,7 +70,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                  tags$h5(tags$b("Location: ")),
                  leafletOutput("map1"), #displaying map
                  
-                 textInput("space", "How much space is available:", ""),
+                 textInput("space1", "How much space is available:", ""),
                  # Select growth range
                  dateRangeInput("growthrange", "Select timeframe from planting to harvesting", start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
@@ -113,7 +113,9 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                  
                   # Select type of plant
                   selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
-                 
+                  # available space
+                  textInput("space2", "How much space is available:", ""),
+                  
                   # submit button
                   actionButton(inputId = "data2",label = "Submit"),
                  
@@ -141,19 +143,28 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   # Server -------------------------------------------------------------------------------- 
   server <- function(input, output, session) {
     
-    coordinates <- reactiveValues(lat = NULL, long = NULL)
+    #coordinates of the users location on whattoplant(map1) and whentoplant(map2)
+    coordinates1 <- reactiveValues(lat = NULL, long = NULL)
+    coordinates2 <- reactiveValues(lat = NULL, long = NULL)
     
     #only submit and compute data when submit button is pressed
     
-    data1 <- eventReactive(input$data1, { c(input$space,input$growthrange)}) 
+    data1 <- eventReactive(input$data1, { c(input$space1,input$growthrange)}) 
     
     data2 <- eventReactive(input$data2, {
       
-      #get climate from user based on coordinates
-      climate <- climate("src/climate.tif", coordinates$lat, coordinates$long)
+      #if marker is on the map coordinates2 are not NULL and computation starts
+      if(!is.null(coordinates2$lat) && !is.null(coordinates2$long)) {
+        #get climate from user based on coordinates
+        climate <- climate("src/climate.tif", coordinates2$lat, coordinates2$long)
       
-      #filter_wtp
-      filter_wtp(plant= input$plant, space=9000, clim=climate) 
+        #filter_wtp
+        filter_wtp(plant= input$plant, space=input$space2, clim=climate)
+      }
+      else {#if no marker is on the map coordinates are NULL and computation does not start
+        "Pls provide a location!"
+        print("Pls provide a location!")
+      }
       
     }) 
     #
@@ -170,13 +181,14 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     
     # page when to plant
     
-    output$timesAndSpace <- renderTable( data2(), rownames = TRUE)
+    output$timesAndSpace <- renderTable( data2(), rownames = FALSE)
     #
     
     
     
     #location api request
     latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
+    #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
     output$location <- renderText( latLongStatus())
     #
     
@@ -204,19 +216,26 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     #observe new marker and save coordinates
     observeEvent(input$map1_draw_new_feature, {
       draw1  <- input$map1_draw_new_feature
-      coordinates$lat <- draw1$geometry$coordinates[[1]]
-      coordinates$long <- draw1$geometry$coordinates[[2]]
-      print(coordinates$lat)
-      print(coordinates$long)
+      coordinates1$lat <- draw1$geometry$coordinates[[1]]
+      coordinates1$long <- draw1$geometry$coordinates[[2]]
+      print(coordinates1$lat)
+      print(coordinates1$long)
     })
     
     #observe marker edit and update coordinates
     observeEvent(input$map1_draw_edited_features, {
       draw1  <- input$map1_draw_edited_features
-      coordinates$lat <- draw1$features[[1]]$geometry$coordinates[[1]]
-      coordinates$long <- draw1$features[[1]]$geometry$coordinates[[2]]
-      print(coordinates$lat)
-      print(coordinates$long)
+      coordinates1$lat <- draw1$features[[1]]$geometry$coordinates[[1]]
+      coordinates1$long <- draw1$features[[1]]$geometry$coordinates[[2]]
+      print(coordinates1$lat)
+      print(coordinates1$long)
+    })
+    #observe marker delete and set coordinates to null
+    observeEvent(input$map1_draw_deleted_features, {
+      coordinates1$lat <- NULL
+      coordinates1$long <- NULL
+      print(coordinates1$lat)
+      print(coordinates1$long)
     })
     
     
@@ -224,19 +243,26 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     #observe new marker and save coordinates
     observeEvent(input$map2_draw_new_feature, {
       draw2  <- input$map2_draw_new_feature
-      coordinates$lat <- draw2$geometry$coordinates[[1]]
-      coordinates$long <- draw2$geometry$coordinates[[2]]
-      print(coordinates$lat)
-      print(coordinates$long)
+      coordinates2$lat <- draw2$geometry$coordinates[[1]]
+      coordinates2$long <- draw2$geometry$coordinates[[2]]
+      print(coordinates2$lat)
+      print(coordinates2$long)
     })
     
-    #ovserve marker edit and update coordinates
+    #observe marker edit and update coordinates
     observeEvent(input$map2_draw_edited_features, {
       draw2  <- input$map2_draw_edited_features
-      coordinates$lat <- draw2$features[[1]]$geometry$coordinates[[1]]
-      coordinates$long <- draw2$features[[1]]$geometry$coordinates[[2]]
-      print(coordinates$lat)
-      print(coordinates$long)
+      coordinates2$lat <- draw2$features[[1]]$geometry$coordinates[[1]]
+      coordinates2$long <- draw2$features[[1]]$geometry$coordinates[[2]]
+      print(coordinates2$lat)
+      print(coordinates2$long)
+    })
+    #observe marker delete and set coordinates to null
+    observeEvent(input$map2_draw_deleted_features, {
+      coordinates2$lat <- NULL
+      coordinates2$long <- NULL
+      print(coordinates2$lat)
+      print(coordinates2$long)
     })
     
     
