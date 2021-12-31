@@ -70,7 +70,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                  tags$h5(tags$b("Location: ")),
                  leafletOutput("map1"), #displaying map
                  
-                 textInput("space1", "How much space is available:", ""),
+                 numericInput("space1", "How much space is available:", 0, min = 0),
                  # Select growth range
                  dateRangeInput("growthrange", "Select timeframe from planting to harvesting", start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
@@ -114,7 +114,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   # Select type of plant
                   selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
                   # available space
-                  textInput("space2", "How much space is available:", ""),
+                  numericInput("space2", "How much space is available:", 0, min = 0),
                   
                   # submit button
                   actionButton(inputId = "data2",label = "Submit"),
@@ -149,21 +149,59 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     
     #only submit and compute data when submit button is pressed
     
-    data1 <- eventReactive(input$data1, { c(input$space1,input$growthrange)}) 
+    data1 <- eventReactive(input$data1, {
+    
+      
+      if(!is.null(coordinates1$lat) && !is.null(coordinates1$long) && input$space1 > 0 ) { #add check if timeframe isset
+        
+        print("submit succesfull!")
+        
+        climate <- climate("src/climate.tif", coordinates1$lat, coordinates1$long)
+        return(what_to_plant(climate, input$growthrange[1], input$growthrange[2], input$space1, plot= FALSE))
+        
+      }
+      #if no marker is on the map coordinates are NULL and computation does not start
+      else if(is.null(coordinates1$lat) || is.null(coordinates1$long)) {
+        
+        print("Pls provide a location!")
+        return("Pls provide a location!")
+      }
+      #no space greater than 0 is provided
+      else if(input$space1 <= 0) {
+        
+        print("pls provide your available space")
+        return("Pls provide your available space")
+      }
+      
+    
+    }) 
     
     data2 <- eventReactive(input$data2, {
       
       #if marker is on the map coordinates2 are not NULL and computation starts
-      if(!is.null(coordinates2$lat) && !is.null(coordinates2$long)) {
+      if(!is.null(coordinates2$lat) && !is.null(coordinates2$long) && (input$space2 > 0) && !is.null(input$plant)) {
+        
+        print("submit succesfull!")
+        
         #get climate from user based on coordinates
         climate <- climate("src/climate.tif", coordinates2$lat, coordinates2$long)
       
+        
         #filter_wtp
-        filter_wtp(plant= input$plant, space=input$space2, clim=climate)
+        return(filter_wtp(plant= input$plant, space=input$space2, clim=climate))
+        
       }
-      else {#if no marker is on the map coordinates are NULL and computation does not start
-        "Pls provide a location!"
+      #if no marker is on the map coordinates are NULL and computation does not start
+      else if(is.null(coordinates2$lat) || is.null(coordinates2$long)) {
+        
         print("Pls provide a location!")
+        return("Pls provide a location!")
+      }
+      #no space greater than 0 is provided
+      else if(input$space2 <= 0) {
+        
+        print("pls provide your available space")
+        return("Pls provide your available space")
       }
       
     }) 
@@ -178,10 +216,10 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     output$plants <- renderText( data1())
     
     
-    
     # page when to plant
-    
     output$timesAndSpace <- renderTable( data2(), rownames = FALSE)
+    
+    
     #
     
     
@@ -309,13 +347,15 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       
     }
     
-    ########### FILTER WHEN TO PLANT ##########
+    ########### FILTER WHEN TO PLANT ###########
     
     number_of_rows_in_dataset <- nrow(plant_data)
     range <- 1:number_of_rows_in_dataset
     Months<-c("January","February","March","April","May","June","July","August","September","October","November","December")
     
     filter_wtp <- function(plant, space, clim){
+      
+      print("in filter_wtp()")
       output_array <- vector()
       for(n in range){
         if(plant == plant_data$plant_name[n]){
@@ -335,11 +375,177 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
           }
         }
       }
-      print("in filter_wtp()")
+      
       print(output_array)
       return(output_array)
     }
     
+  }
+  
+  ######### WHAT TO PLANT SURVIVAL ANALYSIS ##########
+
+  what_to_plant <- function(climate, date_to_plant, date_to_harvest, size, plot = FALSE ) {
+  
+    # read jointly created vegetables table
+    plants <- read.table("src/20211214-plants-scraped.csv", sep = ',', header = T)
+  
+    #excluding non-usable data
+    plants <- plants[,3:10]
+    plants$links <- NULL
+  
+    colnames(plants) <- c('name', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest', 'climate')
+  
+    # mean survival time (discussion required)
+    plants$time <- as.numeric(( plants$max_grow_t + plants$min_grow_t ) / 2)
+  
+    plants_mut <- mutate(plants, space = ifelse((space < 1760), "LT1760", "OV1760"), #1760 is mean space
+                       space = factor(space))
+  
+    # Random Forest Ensemble Model for Prob. of Survival
+    r_fit <- ranger(Surv(time) ~ space + min_grow_t + max_grow_t + climate,
+                  data = plants_mut,
+                  mtry = 2,
+                  importance = "permutation",
+                  splitrule = "extratrees",
+                  verbose = TRUE)
+  
+    death_times <- r_fit$unique.death.times 
+    surv_prob <- data.frame(r_fit$survival)
+    avg_prob <- sapply(surv_prob,mean)
+  
+    if (plot == TRUE){
+    
+      plot(r_fit$unique.death.times,r_fit$survival[1,], 
+         type = "l", 
+         ylim = c(0,1),
+         col = "red",
+         xlab = "Days",
+         ylab = "survival",
+         main = "Patient Survival Curves")
+    
+      cols <- colors()
+      for (n in sample(c(2:dim(plants_mut)[1]), 20)){
+      
+        lines(r_fit$unique.death.times, r_fit$survival[n,], type = "l", col = cols[n])
+      }
+    
+      lines(death_times, avg_prob, lwd = 2)
+      legend(500, 0.7, legend = c('Average = black'))
+    
+      vi <- data.frame(sort(round(r_fit$variable.importance, 4), decreasing = TRUE))
+      names(vi) <- "importance"
+      head(vi)
+    
+    }
+  
+    # Area under ROC
+    #  pe <- cat("Prediction Error = 1 - Harrell's c-index = ", r_fit$prediction.error)
+  
+    #Filtering
+  
+    if (grepl( ".", date_to_plant, fixed = TRUE) == TRUE | grepl( ".", date_to_harvest, fixed = TRUE) == TRUE) {
+    
+      wtp <- as.Date(date_to_plant, '%d.%m.%Y')
+      wth <- as.Date(date_to_harvest, '%d.%m.%Y')
+    
+    }else if (grepl( "/", date_to_plant, fixed = TRUE) == TRUE | grepl( "/", date_to_harvest, fixed = TRUE) == TRUE) {
+    
+      wtp <- as.Date(date_to_plant, '%d/%m/%Y')
+      wth <- as.Date(date_to_harvest, '%d/%m/%Y')
+    
+    }else{
+    
+      wtp <- as.Date(date_to_plant, '%d-%m-%Y')
+      wth <- as.Date(date_to_harvest, '%d-%m-%Y')
+    
+    }
+  
+    gt = as.integer(wth - wtp)
+  
+    dt <- c()
+    for (i in 1:length(death_times)){
+    
+      dt[i] <- abs(death_times[i] - gt)
+    
+    }
+  
+    min_dt <- min(dt)
+    for (i in 1:length(death_times)){
+    
+      if (dt[i] == min(dt)){
+      
+        item = i
+      
+      }
+    }
+  
+    wtp = as.integer(format(wtp, "%m"))
+    wth = as.integer(format(wth, "%m"))    
+  
+    #final filtering
+    f <- surv_prob[,item]
+  
+    if (length(f) > 1700){
+    
+    
+      ls <- c()
+      for ( i in 1:length(f)){
+      
+        if (f[i] > 0.8){
+        
+          ls <- c(ls, i)
+        
+        }
+      }
+    }else {
+    
+      ls <- c()
+      for ( i in 1:length(f)){
+      
+        if (f[i] > 0.7){
+        
+          ls <- c(ls, i)
+        
+        }
+      }
+    }
+  
+    nls <- c()
+    for ( i in ls){
+    
+      if (grepl(wtp, plants[i, 3]) == 1 & grepl(wth, plants[i, 6]) == 1) {
+      
+        nls <- c(nls, i)
+      
+      }
+    }
+  
+    prd <- plants[nls,]
+    prd$surv_p <- round(surv_prob[nls, item], 2)*100
+    prd <- prd[which(prd$min_grow_t <= gt + 15 & prd$max_grow_t >= gt - 15), ]
+    prd <- prd[which(prd$space <= size + 50 ),] 
+    prd <- prd[which(substr(prd$climate, 1, 2) == substr(climate, 1, 2)),]
+  
+    if ( nrow(prd) == 0){
+    
+      print("Sorry, no recommendations for you. Please try other dates.")
+    
+    
+    }else{
+    
+      for (i in 1:nrow(prd)){
+        cat(
+          "We recommend you ",
+          prd[i, 1],
+          "with a",
+          as.character(prd[i,'surv_p']),
+          "% chance of success!",
+          "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", 
+          "\n\n"
+        ) 
+      }
+    }
+  
   }
     
   
