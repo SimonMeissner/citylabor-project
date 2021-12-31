@@ -135,7 +135,14 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                 
                ) # mainPanel
               ) # sidebarLayout
-      ) # end Page3
+      ), # end Page3
+      
+      # Page4, used for an impressum
+      tabPanel( title = "Impressum", value = "tab4"
+               #TODO: Impressum @Merel
+                 
+                
+      )
     ) # navbarPage
   ) # fluidPage
 
