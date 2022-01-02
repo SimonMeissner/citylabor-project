@@ -15,12 +15,13 @@ suppressPackageStartupMessages(library(ranger))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(raster))
+suppressPackageStartupMessages(library(htmltools))
+suppressPackageStartupMessages(library(htmlwidgets))
+suppressPackageStartupMessages(library(rgdal))
 
 
 
 plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load test plant data
-
-
 
 
 
@@ -40,7 +41,6 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       tabPanel( title = "Welcome", value = "tab1",
                mainPanel(
                  
-                  h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
                   h1("Welcome"),
                   p("This is the landing page of our webapp build in R-Shiny!
                     It could be used to describe our app and suggests the user
@@ -88,8 +88,6 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                
                mainPanel( # mainPanel used for outputting results
                  
-                 h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
-                 
                  h2("Results:"),
                  h4("lists possible plants ordered by success rate!"),
                  
@@ -124,7 +122,6 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                
                mainPanel( # mainPanel used for outputting results
                  
-                  h1("Under Construction!",style = "font-weight: 500; color: red"), #Under Construction sign
                   h2("Results:"),
                   h4("returns possibly planting and harvest times for your plant in addition to the required space"),
                   
@@ -244,18 +241,30 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     mapdata <- reactive({
       leaflet() %>%
       addTiles(options = tileOptions(opacity = 0.8)) %>%
+      addEasyButton(easyButton(
+        icon="fa-crosshairs", title="Locate Me",
+        onClick=JS("function(btn, map){ 
+                      map.locate({setView: true})
+                      .on('locationfound', function(e){
+                          var marker = map.addmarker([e.latitude, e.longitude]).bindPopup('Your are here :)');
+                      })
+                      
+                      
+                      
+                    }")
+      )) %>%
       
-        setView(7.633763,51.97587, zoom = 4) %>%
-        addDrawToolbar(
-          polylineOptions = FALSE,
-          polygonOptions = FALSE,
-          rectangleOptions = FALSE,
-          circleOptions = FALSE,
-          markerOptions = TRUE,
-          circleMarkerOptions = FALSE,
-          singleFeature = TRUE,
-          editOptions = editToolbarOptions()
-        )
+      setView(7.633763,51.97587, zoom = 4) %>%
+      addDrawToolbar(
+        polylineOptions = FALSE,
+        polygonOptions = FALSE,
+        rectangleOptions = FALSE,
+        circleOptions = FALSE,
+        markerOptions = TRUE,
+        circleMarkerOptions = FALSE,
+        singleFeature = TRUE,
+        editOptions = editToolbarOptions()
+      )
     })
     #observers for marker actions on map1
     #observe new marker and save coordinates
