@@ -52,11 +52,6 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   p("By clicking one of the options the user gets redirected to the different pages"),
                   
                   
-                  h1("Testing Location api",style = "font-weight: 500; color: red"),
-                  
-                  
-                  
-                  verbatimTextOutput("location")
                )
                
       ), # end Page1
@@ -151,6 +146,14 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     coordinates1 <- reactiveValues(lat = NULL, long = NULL)
     coordinates2 <- reactiveValues(lat = NULL, long = NULL)
     
+    
+    #location api request
+    latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
+    
+    #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
+    
+    
+    
     #only submit and compute data when submit button is pressed
     
     data1 <- eventReactive(input$data1, {
@@ -228,13 +231,6 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     
     
     
-    #location api request
-    latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
-    #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
-    output$location <- renderText( latLongStatus())
-    #
-    
-    
     
     #map section
     #middleware to avoid duplicate code
@@ -246,13 +242,17 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
         onClick=JS("function(btn, map){ 
                       map.locate({setView: true})
                       .on('locationfound', function(e){
-                          var marker = map.addmarker([e.latitude, e.longitude]).bindPopup('Your are here :)');
+                          console.log(e.latitude + ', ' + e.longitude);
+                          
+                          Shiny.setInputValue('lat', e.latitude); //send latlong coordinates to Shiny
+                          Shiny.setInputValue('long', e.longitude);
                       })
                       
                       
                       
                     }")
       )) %>%
+        
       
       setView(7.633763,51.97587, zoom = 4) %>%
       addDrawToolbar(
@@ -266,6 +266,16 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
         editOptions = editToolbarOptions()
       )
     })
+    
+    observe({if(!is.null(input$lat)) {
+      print("hello")
+      map <- leafletProxy("mapdata")
+      lat <- input$lat
+      long <- input$long
+      map %>% addMarkers(lat,long)
+    }})
+    
+    
     #observers for marker actions on map1
     #observe new marker and save coordinates
     observeEvent(input$map1_draw_new_feature, {
