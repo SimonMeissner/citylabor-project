@@ -544,24 +544,24 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   
     if ( nrow(prd) == 0){
     
-      print("Sorry, no recommendations for you. Please try other dates.")
+      r = "Sorry, no recommendations for you. Please try other dates."
     
     
     }else{
     
+      r = c()
       for (i in 1:nrow(prd)){
-        cat(
+        r[i] = paste(
           "We recommend you ",
           prd[i, 1],
           "with a",
           as.character(prd[i,'surv_p']),
           "% chance of success!",
-          "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", 
-          "\n\n"
+          "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", "\n"
         ) 
       }
     }
-  
+  return(r)
   }
     
   
