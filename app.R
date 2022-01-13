@@ -42,9 +42,11 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                mainPanel(
                  
                   h1("Welcome"),
-                  p("This is the landing page of our webapp build in R-Shiny!
-                    It could be used to describe our app and suggests the user
-                    to use one of the two options."),
+                  p("Welcome to our Urban Garden plant planner! As an urban gardener, it's not always easy to decide on which plants you'd like to have in your garden. 
+                    Plant survival depends on many things, and the amount of information can be overwhelming at times.
+                    That's why our website aims to assist enthousiastic gardeners by proposing some suggested plant types that are suitable for your garden.
+                    Additionally, if you wonder what's the best time to plant something, you can consult the 'When to plant' page. 
+                    Our suggestions are based on the climate type of your location, as well as the available space in your garden. Have fun!"),
                   
                   actionButton("redirect1", "What to plant"),
                   
@@ -134,10 +136,18 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
               ) # sidebarLayout
       ), # end Page3
       
-      # Page4, used for an impressum
-      tabPanel( title = "Impressum", value = "tab4"
-               #TODO: Impressum @Merel
-                 
+      # Page4, used for contact page
+      tabPanel( title = "About", value = "tab4",
+                
+                mainPanel(
+                  h1("Who are we?"),
+                  p("This app was developed by five students from the University of Muenster, Germany.
+                    The development was completed using RShiny.
+                    If you have any questions, please don't hesitate to contact us:"),
+                  a(actionButton(inputId = "email1", label = "merel.vogel@uni-muenster.de", 
+                                 icon = icon("envelope", lib = "font-awesome")),
+                    href="merel.vogel@uni-muenster.de")
+                )
                 
       )
     ) # navbarPage
