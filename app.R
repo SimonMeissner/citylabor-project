@@ -42,11 +42,9 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                mainPanel(
                  
                   h1("Welcome"),
-                  p("Welcome to our Urban Garden plant planner! As an urban gardener, it's not always easy to decide on which plants you'd like to have in your garden. 
-                    Plant survival depends on many things, and the amount of information can be overwhelming at times.
-                    That's why our website aims to assist enthousiastic gardeners by proposing some suggested plant types that are suitable for your garden.
-                    Additionally, if you wonder what's the best time to plant something, you can consult the 'When to plant' page. 
-                    Our suggestions are based on the climate type of your location, as well as the available space in your garden. Have fun!"),
+                  p("This is the landing page of our webapp build in R-Shiny!
+                    It could be used to describe our app and suggests the user
+                    to use one of the two options."),
                   
                   actionButton("redirect1", "What to plant"),
                   
@@ -136,18 +134,10 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
               ) # sidebarLayout
       ), # end Page3
       
-      # Page4, used for contact page
-      tabPanel( title = "About", value = "tab4",
-                
-                mainPanel(
-                  h1("Who are we?"),
-                  p("This app was developed by five students from the University of Muenster, Germany.
-                    The development was completed using RShiny.
-                    If you have any questions, please don't hesitate to contact us:"),
-                  a(actionButton(inputId = "email1", label = "merel.vogel@uni-muenster.de", 
-                                 icon = icon("envelope", lib = "font-awesome")),
-                    href="merel.vogel@uni-muenster.de")
-                )
+      # Page4, used for an impressum
+      tabPanel( title = "Impressum", value = "tab4"
+               #TODO: Impressum @Merel
+                 
                 
       )
     ) # navbarPage
@@ -231,13 +221,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     
     
     # page when to plant
-    output$timesAndSpace <-renderUI({
-                          renderTable(data2(), bordered = TRUE, width = '60%',  colnames=FALSE, 
-                                      caption = "<b> <span style='color:#000000; font-size: 24px;'> Results: </b>",
-                                      caption.placement = getOption("xtable.caption.placement", "top"),
-                                      caption.width = getOption("xtable.caption.width", NULL))
-                      
-  })
+    output$timesAndSpace <- renderTable( data2(), rownames = FALSE)
     
     
     #
@@ -394,12 +378,12 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
           if(plant_data$required_space[n]>space){
             return("You do not have enough space")
           }
-          if(plant_data$required_space[n]<=space && plant_data$climate[n] == clim) {
+          if(plant_data$required_space[n]<=space && substr(plant_data$climate[n], 1, 2) == substr(clim, 1, 2)) {
             when_to_plant <- plant_data$when_to_plant[n]
             when_to_plant <- unlist(strsplit(when_to_plant, ","))
             when_to_plant <- as.numeric(when_to_plant)
             for(i in when_to_plant){
-              x <- paste("You can plant in ", Months[i]) 
+              x <- c("You can plant in ", Months[i]) 
               output_array <- append(output_array, x) 
               cat("You can plant in", Months[i], "\n\n")
               
@@ -423,9 +407,8 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   
     #excluding non-usable data
     plants <- plants[,3:10]
-    plants$links <- NULL
   
-    colnames(plants) <- c('name', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest', 'climate')
+    colnames(plants) <- c('name', 'links', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest', 'climate')
   
     # mean survival time (discussion required)
     plants$time <- as.numeric(( plants$max_grow_t + plants$min_grow_t ) / 2)
@@ -545,7 +528,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     nls <- c()
     for ( i in ls){
     
-      if (grepl(wtp, plants[i, 3]) == 1 & grepl(wth, plants[i, 6]) == 1) {
+      if (grepl(wtp, plants[i, 4]) == 1 & grepl(wth, plants[i, 7]) == 1) {
       
         nls <- c(nls, i)
       
@@ -560,27 +543,28 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   
     if ( nrow(prd) == 0){
     
-      r = "Sorry, no recommendations for you. Please try other dates."
-    
+      r = "Sorry, no recommendations for you. \n Please try dates with different gap."
     
     }else{
+      
+      if ( nrow(prd) >= 10){
+        
+        prd <- prd[which(prd$surv_p > 99),]
+      }
+      
+      prd <- prd[order(-prd$surv_p), ]
     
       r = c()
       for (i in 1:nrow(prd)){
         r[i] = paste(
-          "We recommend you ",
-          prd[i, 1],
-          "with a",
-          as.character(prd[i,'surv_p']),
-          "% chance of success!",
-          "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", "\n"
+          prd[i, 1], ":",
+          "Visit ", prd[i, 2], "for more information", 
+          "\n\n"
         ) 
       }
     }
   return(r)
   }
     
-  
-
   # Create Shiny object
   shinyApp(ui = ui, server = server)
