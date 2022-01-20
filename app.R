@@ -221,8 +221,13 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
     
     
     # page when to plant
-    output$timesAndSpace <- renderTable( data2(), rownames = FALSE)
-    
+    output$timesAndSpace <-renderUI({
+      renderTable(data2(), bordered = TRUE, width = '60%',  colnames=FALSE, 
+                  caption = "<b> <span style='color:#000000; font-size: 24px;'> Results: </b>",
+                  caption.placement = getOption("xtable.caption.placement", "top"),
+                  caption.width = getOption("xtable.caption.width", NULL))
+      
+    })
     
     #
     
@@ -383,7 +388,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
             when_to_plant <- unlist(strsplit(when_to_plant, ","))
             when_to_plant <- as.numeric(when_to_plant)
             for(i in when_to_plant){
-              x <- c("You can plant in ", Months[i]) 
+              x <- paste("You can plant in ", Months[i]) 
               output_array <- append(output_array, x) 
               cat("You can plant in", Months[i], "\n\n")
               
