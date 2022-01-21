@@ -26,7 +26,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
 
 
   # UI -------------------------------------------------------------------------------------------
-  ui <- fluidPage(theme = shinytheme("cerulean"),
+  ui <- fluidPage(theme = shinytheme("flatly"),
                   tags$head(includeHTML(("www/geolocation.html"))),
                   
                   
@@ -51,7 +51,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   actionButton("redirect1", "What to plant"),
                   
                   actionButton("redirect2", "When to plant"),
-                  p("By clicking one of the options the user gets redirected to the different pages"),
+                  p("Click on one of the buttons above to get started."),
                   
                   
                   h1("Testing Location api",style = "font-weight: 500; color: red"),
@@ -72,7 +72,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                  tags$h5(tags$b("Location: ")),
                  leafletOutput("map1"), #displaying map
                  
-                 numericInput("space1", "How much space is available:", 0, min = 0),
+                 numericInput("space1", "How much space is available? (in square centimeters)", 0, min = 0),
                  # Select growth range
                  dateRangeInput("growthrange", "Select timeframe from planting to harvesting", start = NULL, end = NULL,
                                 min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
@@ -90,8 +90,9 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                
                mainPanel( # mainPanel used for outputting results
                  
-                 h2("Results:"),
-                 h4("lists possible plants ordered by success rate!"),
+                 h2("Results"),
+                 h4("Lists vegetable and fruit types you can plant ordered by success rate! \n 
+                    Please keep in mind that our suggestions only work if you water your plants properly."),
                  
                  verbatimTextOutput("plants"),
                  
@@ -114,7 +115,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   # Select type of plant
                   selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
                   # available space
-                  numericInput("space2", "How much space is available:", 0, min = 0),
+                  numericInput("space2", "How much space is available? (in square centimeters)", 0, min = 0),
                   
                   # submit button
                   actionButton(inputId = "data2",label = "Submit"),
@@ -124,8 +125,9 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                
                mainPanel( # mainPanel used for outputting results
                  
-                  h2("Results:"),
-                  h4("returns possibly planting and harvest times for your plant in addition to the required space"),
+                  h2("Results"),
+                  h4("Returns planting and harvest times for the selected plant, as well as the space it needs to grow properly.\n 
+                    Please keep in mind that our suggestions only work if you water your plants properly."),
                   
                   tableOutput("timesAndSpace"),
                  
@@ -142,11 +144,15 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                 mainPanel(
                   h1("Who are we?"),
                   p("This app was developed by five students from the University of Muenster, Germany.
-                    The development was completed using RShiny.
+                    The development was completed using RShiny. \n
                     If you have any questions, please don't hesitate to contact us:"),
                   a(actionButton(inputId = "email1", label = "merel.vogel@uni-muenster.de", 
                                  icon = icon("envelope", lib = "font-awesome")),
-                    href="merel.vogel@uni-muenster.de")
+                    href="merel.vogel@uni-muenster.de"),
+                  h1("Disclaimer"),
+                  p("Please use the information on this website carefully, and make your own risk assessments when planting and harvesting.
+                    We do not accept any liability or responsibility as a result of using the information we provide on this website.
+                    The five of us can not be held responsible for any possible damage to gardens or other forms of consequences.")
                 )
                  
                 
@@ -169,7 +175,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       
       if(!is.null(coordinates1$lat) && !is.null(coordinates1$long) && input$space1 > 0 ) { #add check if timeframe isset
         
-        print("submit succesfull!")
+        print("Submit successful!")
         
         climate <- climate("src/climate.tif", coordinates1$lat, coordinates1$long)
         return(what_to_plant(climate, input$growthrange[1], input$growthrange[2], input$space1, plot= FALSE))
@@ -178,14 +184,14 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       #if no marker is on the map coordinates are NULL and computation does not start
       else if(is.null(coordinates1$lat) || is.null(coordinates1$long)) {
         
-        print("Pls provide a location!")
-        return("Pls provide a location!")
+        print("Please provide a location!")
+        return("Please provide a location!")
       }
       #no space greater than 0 is provided
       else if(input$space1 <= 0) {
         
-        print("pls provide your available space")
-        return("Pls provide your available space")
+        print("Please provide your available space")
+        return("Please provide your available space")
       }
       
     
@@ -196,7 +202,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       #if marker is on the map coordinates2 are not NULL and computation starts
       if(!is.null(coordinates2$lat) && !is.null(coordinates2$long) && (input$space2 > 0) && !is.null(input$plant)) {
         
-        print("submit succesfull!")
+        print("Submit successful!")
         
         #get climate from user based on coordinates
         climate <- climate("src/climate.tif", coordinates2$lat, coordinates2$long)
@@ -209,14 +215,14 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       #if no marker is on the map coordinates are NULL and computation does not start
       else if(is.null(coordinates2$lat) || is.null(coordinates2$long)) {
         
-        print("Pls provide a location!")
-        return("Pls provide a location!")
+        print("Please provide a location!")
+        return("Please provide a location!")
       }
       #no space greater than 0 is provided
       else if(input$space2 <= 0) {
         
-        print("pls provide your available space")
-        return("Pls provide your available space")
+        print("Please provide your available space")
+        return("Please provide your available space")
       }
       
     }) 
@@ -559,7 +565,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
   
     if ( nrow(prd) == 0){
     
-      r = "Sorry, no recommendations for you. \n Please try dates with different gap."
+      r = "Sorry, no recommendations for you. \n Please try plant and harvest dates that are either closer or further away from each other."
     
     }else{
       
