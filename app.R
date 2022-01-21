@@ -51,7 +51,8 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   actionButton("redirect1", "What to plant"),
                   
                   actionButton("redirect2", "When to plant"),
-                  p("Click on one of the buttons above to get started planting."),
+                  p("Click on one of the buttons above to get started planting. \n 
+                    Please keep in mind that our suggestions only work if you water your plants properly."),
                   
                   
                   h1("Testing Location api",style = "font-weight: 500; color: red"),
@@ -91,8 +92,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                mainPanel( # mainPanel used for outputting results
                  
                  h2("Results"),
-                 h4("Lists vegetable and fruit types you can plant ordered by success rate! \n 
-                    Please keep in mind that our suggestions only work if you water your plants properly."),
+                 h4("Returns vegetable and fruit types you can plant, ordered by success rate."),
                  
                  verbatimTextOutput("plants"),
                  
@@ -126,8 +126,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                mainPanel( # mainPanel used for outputting results
                  
                   h2("Results"),
-                  h4("Returns planting and harvest times for the selected plant, as well as the space it needs to grow properly.\n 
-                    Please keep in mind that our suggestions only work if you water your plants properly."),
+                  h4("Returns planting and harvest times for the selected plant."),
                   
                   tableOutput("timesAndSpace"),
                  
