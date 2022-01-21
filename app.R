@@ -38,7 +38,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       id = "navbar",
       
       # Page1, used as a welcome landing page with descriptions and redirecting features for the user 
-      tabPanel( title = "Welcome", value = "tab1",
+      tabPanel( title = "Home", value = "tab1",
                mainPanel(
                  
                   h1("Welcome"),
@@ -51,7 +51,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   actionButton("redirect1", "What to plant"),
                   
                   actionButton("redirect2", "When to plant"),
-                  p("Click on one of the buttons above to get started."),
+                  p("Click on one of the buttons above to get started planting."),
                   
                   
                   h1("Testing Location api",style = "font-weight: 500; color: red"),
@@ -64,7 +64,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       ), # end Page1
       
       # Page2, used for providing the "When to plant" service
-      tabPanel( title = "What to plant!", value = "tab2",
+      tabPanel( title = "What to plant", value = "tab2",
                sidebarLayout(
                 sidebarPanel(
                  tags$h3("What can I plant?"),
@@ -103,7 +103,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
       ), # end Page2
       
       # Page3, used for providing the "What to plant" service
-      tabPanel( title = "When to plant!", value = "tab3",
+      tabPanel( title = "When to plant", value = "tab3",
                sidebarLayout(
                 sidebarPanel(
                   tags$h3("When can I plant?"),
@@ -146,13 +146,18 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
                   p("This app was developed by five students from the University of Muenster, Germany.
                     The development was completed using RShiny. \n
                     If you have any questions, please don't hesitate to contact us:"),
-                  a(actionButton(inputId = "email1", label = "merel.vogel@uni-muenster.de", 
+                  a(actionButton(inputId = "email1", label = " merel.vogel@uni-muenster.de", 
                                  icon = icon("envelope", lib = "font-awesome")),
                     href="merel.vogel@uni-muenster.de"),
                   h1("Disclaimer"),
                   p("Please use the information on this website carefully, and make your own risk assessments when planting and harvesting.
                     We do not accept any liability or responsibility as a result of using the information we provide on this website.
-                    The five of us can not be held responsible for any possible damage to gardens or other forms of consequences.")
+                    The five of us can not be held responsible for any possible damage to gardens or other forms of consequences."),
+                  h1("Data sources"),
+                  p("The plant information we used in our analyses is retrieved from the following website:"),
+                  a(actionButton(inputId = "website", label = " https://gardenplanner.almanac.com/", 
+                                 icon = icon("fas fa-seedling", lib = "font-awesome")),
+                    href="https://gardenplanner.almanac.com/plants/us-and-canada/"),
                 )
                  
                 
