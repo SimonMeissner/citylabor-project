@@ -4,7 +4,7 @@ This repository contains the project of the cityLabor seminar course at WWWU Mü
 
 ## Project Information
 
-In this project a web application was developed for urban gardeners which helps them to determine what plants are suitable to plant at what times in their location. The recommendations for __"What to plant"__ are based on a _Survival Analysis_ function with an _ROC_ of about __74%__ and a _Köppen-Geiger Climate Map_. The recommendations for __"When to plant"__ are solely based on filtering our extensive (dataset)[https://github.com/SimonMeissner/citylabor-project/blob/main/src/20211214-plants-scraped.csv] which was webscraped from a (north-american gardenplanner website)[https://gardenplanner.almanac.com/plants/us-and-canada/] featuring 259 popular plants for gardening. The application covers a major extent of the european area. (Feel free to visit the webpage here)[https://simonmeissner.shinyapps.io/urbangardentool/]  
+In this project a web application was developed for urban gardeners which helps them to determine what plants are suitable to plant at what times in their location. The recommendations for __"What to plant"__ are based on a _Survival Analysis_ function with an _ROC_ of about __74%__ and a _Köppen-Geiger Climate Map_. The recommendations for __"When to plant"__ are solely based on filtering our extensive [dataset](htps://github.com/SimonMeissner/citylabor-project/blob/main/src/20211214-plants-scraped.csv) hich was webscraped from a [north-american gardenplanner website](https://gardenplanner.almanac.com/plants/us-and-canada/) featuring 259 popular plants for gardening. The application covers a major extent of the european area. [Feel free to visit here](https://simonmeissner.shinyapps.io/urbangardentool/)
 
 ## Motivation
 
