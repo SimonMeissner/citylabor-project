@@ -28,9 +28,8 @@ what_to_plant <- function(file, climate, date_to_plant, date_to_harvest, size, p
 
   #excluding non-usable data
   plants <- plants[,3:10]
-  plants$links <- NULL
   
-  colnames(plants) <- c('name', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest', 'climate')
+  colnames(plants) <- c('name', 'links', 'space', 'when_to_plant', 'min_grow_t', 'max_grow_t', 'when_to_harvest', 'climate')
 
 # mean survival time (discussion required)
   plants$time <- as.numeric(( plants$max_grow_t + plants$min_grow_t ) / 2)
@@ -150,7 +149,7 @@ what_to_plant <- function(file, climate, date_to_plant, date_to_harvest, size, p
   nls <- c()
   for ( i in ls){
 
-    if (grepl(wtp, plants[i, 3]) == 1 & grepl(wth, plants[i, 6]) == 1) {
+    if (grepl(wtp, plants[i, 4]) == 1 & grepl(wth, plants[i, 7]) == 1) {
 
       nls <- c(nls, i)
 
@@ -167,22 +166,32 @@ what_to_plant <- function(file, climate, date_to_plant, date_to_harvest, size, p
 
     print("Sorry, no recommendations for you. Please try other dates.")
 
+  }  
 
-  }else{
+  else{
 
+    if ( nrow(prd) >= 10){
+
+      prd <- prd[which(prd$surv_p > 99),]
+    }
+
+    prd <- prd[order(-prd$surv_p), ]
+
+    print(head(prd))
     for (i in 1:nrow(prd)){
       cat(
-        "We recommend you ",
         prd[i, 1],
-        "with a",
+        "with ",
         as.character(prd[i,'surv_p']),
         "% chance of success!",
-        "You're harvesting between", prd[i, 4], "and", prd[i, 5], "days, approximatedly", 
+        "\n",
+        "Visit ", prd[i, 2], "for more information", 
         "\n\n"
       ) 
     }
   }
   
 }
+
 
 what_to_plant('20211214-plants-scraped.csv', climate('climate.tif', 41.40431, 2.16637), '01.05.2021', '01.09.2021', 1000, plot = FALSE )
