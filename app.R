@@ -174,6 +174,11 @@ server <- function(input, output, session) {
   
   #only submit and compute data when submit button is pressed
   
+  #location api request
+  latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
+  
+  #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
+  
   data1 <- eventReactive(input$data1, {
     
     
@@ -311,6 +316,15 @@ server <- function(input, output, session) {
         editOptions = editToolbarOptions()
       )
   })
+
+ # observe({if(!is.null(input$lat)) {
+  #    print("hello")
+   #   map <- leafletProxy("mapdata")
+   #   lat <- input$lat
+   #   long <- input$long
+   #   map %>% addMarkers(lat,long)
+   # }})
+
   #observers for marker actions on map1
   #observe new marker and save coordinates
   observeEvent(input$map1_draw_new_feature, {
