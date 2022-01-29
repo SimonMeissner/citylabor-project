@@ -237,10 +237,20 @@ server <- function(input, output, session) {
     
   }) 
   
-  selected_plant <- eventReactive(input$plant, {
+   selected_plant <- eventReactive(input$plant, {
     plantname <- as.character(input$plant)
-    plantname <- tolower(plantname)
-    link <- paste("https://gardenplanner.almanac.com/plants/us-and-canada/how-to-grow-", plantname, '/', sep = "", collapse = NULL)
+    #plantname <- tolower(plantname)
+    print(plantname)
+    links <- vector()
+    for(i in 1:nrow(plant_data)){
+      if(plant_data$plant_name[i] == plantname){
+        links <- append(links, plant_data$links[i])
+      }
+    }
+    #print(links)
+    link <- links[1]
+    print(link)
+    #link <- paste("https://gardenplanner.almanac.com/plants/us-and-canada/how-to-grow-", plantname, '/', sep = "", collapse = NULL)
     url <- a("Find more information here", href=link)
     url <- HTML(paste(url))
     return (url)
