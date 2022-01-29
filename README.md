@@ -30,3 +30,7 @@ By following these instructions you can install this repository to edit code loc
 ### Disclaimer
 
 __We are not liable for any of the received recommendations or outcomes that are based on them__
+
+### License
+
+[MIT](https://en.wikipedia.org/wiki/MIT_License)
