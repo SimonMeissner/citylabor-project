@@ -40,7 +40,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                             mainPanel(
                               
                               h1("Welcome"),
-                              p("Welcome to our Urban Garden plant planner! As an urban gardener, it's not always easy to decide on which plants you'd like to have in your garden. 
+                              h4("Welcome to our Urban Garden plant planner! As an urban gardener, it's not always easy to decide on which plants you'd like to have in your garden. 
                     Plant survival depends on many things, and the amount of information can be overwhelming at times.
                     That's why our website aims to assist enthousiastic gardeners by proposing some suggested plant types that are suitable for your garden.
                     Additionally, if you wonder what's the best time to plant something, you can consult the 'When to plant' page. 
@@ -49,7 +49,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                               actionButton("redirect1", "What to plant"),
                               
                               actionButton("redirect2", "When to plant"),
-                              p("Click on one of the buttons above to get started planting. \n 
+                              h4("Click on one of the buttons above to get started planting. \n 
                     Please keep in mind that our suggestions only work if you water your plants properly."),
                               
                             )
@@ -65,7 +65,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                 tags$h5(tags$b("Location: ")),
                                 leafletOutput("map1"), #displaying map
                                 
-                                numericInput("space1", "How much space is available? (in square centimeters)", 0, min = 0),
+                                numericInput("space1", "How much space is available? (in square centimeters)", 0, min = 0, step = 100),
                                 # Select growth range
                                 dateRangeInput("growthrange", "Select timeframe from planting to harvesting", start = NULL, end = NULL,
                                                min = "2021-01-01", max = "2030-01-01", startview =  "year", weekstart = "1"),
@@ -83,8 +83,15 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                               
                               mainPanel( # mainPanel used for outputting results
                                 
-                                h2("Results"),
-                                h4("Returns vegetable and fruit types you can plant, ordered by success rate."),
+                                h2("About this page"),
+                                h4("This page is designed to help (urban) gardeners find plants they can plant in their garden. 
+                                   To recieve some suggestions please fill out the form according to your needs. 
+                                   You have to provide the location of your garden, the reserved space (in square centimeters) 
+                                   for your plant and also your desired planting and harvesting times."),
+                                h3("Attention"),
+                                h4("Please take note, that the service is currently only available european-wide. 
+                                Also take in consideration that extreme input values probably won't result in many suggested plants. 
+                                For the best results provide spaces around a few squaremeters and harvest-to-plant ranges of around 4-6 months."),
                                 
                                 verbatimTextOutput("plants"),
                                 
@@ -107,7 +114,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                 # Select type of plant
                                 selectInput(inputId = "plant", label = strong("Select Plant:"), choices = unique(plant_data$plant_name)),
                                 # available space
-                                numericInput("space2", "How much space is available? (in square centimeters)", 0, min = 0),
+                                numericInput("space2", "How much space is available? (in square centimeters)", 0, min = 0, step = 100),
                                 
                                 # submit button
                                 actionButton(inputId = "data2",label = "Submit"),
@@ -117,8 +124,15 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                               
                               mainPanel( # mainPanel used for outputting results
                                 
-                                h2("Results"),
-                                h4("Returns planting and harvest times for the selected plant."),
+                                h2("About this page"),
+                                h4("This page is designed to help (urban) gardeners find planting times for a desired plant.
+                                   To recieve some suggestions please fill out the form according to your needs. 
+                                   You have to provide the location of your garden and the available space for the plant"),
+                                h3("Attention"),
+                                h4("Please take note, that the service is currently only available european-wide. 
+                                Also take in consideration that extreme input values probably won't result in many suggested plants. 
+                                The algorithm for example only suggests planting times if your provided space is sufficient enough for the plant to grow"),
+                                
                                 
                                 tableOutput("timesAndSpace"),
                                 tableOutput("datalink")
@@ -204,7 +218,7 @@ server <- function(input, output, session) {
       climate <- climate("src/climate.tif", coordinates2$long, coordinates2$lat)
       
       
-      #filter_wtp
+      #when_to_plant
       return(when_to_plant(plant= input$plant, space=input$space2, clim=climate))
       
     }
