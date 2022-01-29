@@ -27,9 +27,7 @@ plant_data <- read.csv("src/20211214-plants-scraped.csv", header=TRUE) # Load te
 
 # UI -------------------------------------------------------------------------------------------
 ui <- fluidPage(theme = shinytheme("flatly"),
-                tags$head(includeHTML(("www/geolocation.html"))),
-                
-                
+              
                 navbarPage(
                   
                   
@@ -54,12 +52,6 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                               p("Click on one of the buttons above to get started planting. \n 
                     Please keep in mind that our suggestions only work if you water your plants properly."),
                               
-                              
-                              h1("Testing Location api",style = "font-weight: 500; color: red"),
-                              
-                              
-                              
-                              verbatimTextOutput("location")
                             )
                             
                   ), # end Page1
@@ -174,11 +166,6 @@ server <- function(input, output, session) {
   
   #only submit and compute data when submit button is pressed
   
-  #location api request
-  latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
-  
-  #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
-  
   data1 <- eventReactive(input$data1, {
     
     
@@ -186,7 +173,7 @@ server <- function(input, output, session) {
       
       print("Submit successful!")
       
-      climate <- climate("src/climate.tif", coordinates1$lat, coordinates1$long)
+      climate <- climate("src/climate.tif", coordinates1$long, coordinates1$lat)
       return(what_to_plant(climate, input$growthrange[1], input$growthrange[2], input$space1, plot= FALSE))
       
     }
@@ -214,11 +201,11 @@ server <- function(input, output, session) {
       print("Submit successful!")
       
       #get climate from user based on coordinates
-      climate <- climate("src/climate.tif", coordinates2$lat, coordinates2$long)
+      climate <- climate("src/climate.tif", coordinates2$long, coordinates2$lat)
       
       
       #filter_wtp
-      return(filter_wtp(plant= input$plant, space=input$space2, clim=climate))
+      return(when_to_plant(plant= input$plant, space=input$space2, clim=climate))
       
     }
     #if no marker is on the map coordinates are NULL and computation does not start
@@ -273,119 +260,156 @@ server <- function(input, output, session) {
   #
   
   
-  
-  #location api request
-  latLongStatus <- reactive({c(input$lat, input$long, input$geolocation)})
-  #geolocation <- reactiveValues(lat = input$lat, long = input$long, status = input$geolocation)
-  output$location <- renderText( latLongStatus())
-  #
-  
-  
-  
   #map section
-  #middleware to avoid duplicate code
-  mapdata <- reactive({
-    leaflet() %>%
+  
+  toolbar1 <- TRUE
+  toolbar2 <- TRUE
+  
+  
+  #render map1 for what to plant
+  init1 <- function() renderLeaflet({
+    leaf <- leaflet() %>%
       addTiles(options = tileOptions(opacity = 0.8)) %>%
-      addEasyButton(easyButton(
+      setView(7.633763,51.97587, zoom = 4) %>%
+        addEasyButton(easyButton(
         icon="fa-crosshairs", title="Locate Me",
         onClick=JS("function(btn, map){ 
                       map.locate({setView: true})
                       .on('locationfound', function(e){
-                          console.log(e.latitude + ', ' + e.longitude);
-                          
-                          Shiny.setInputValue('lat', e.latitude); //send latlong coordinates to Shiny
-                          Shiny.setInputValue('long', e.longitude);
-                      })
-                      
-                      
-                      
+                          Shiny.setInputValue('lat1', e.latitude); //send latlong coordinates to Shiny
+                          Shiny.setInputValue('long1', e.longitude);
+                          Shiny.setInputValue('send1', Date.now()) //create unique value so that ObserveEvent gets triggered
+                      }) 
                     }")
-      )) %>%
-        
-      
-      setView(7.633763,51.97587, zoom = 4) %>%
-      addDrawToolbar(
-        polylineOptions = FALSE,
-        polygonOptions = FALSE,
-        rectangleOptions = FALSE,
-        circleOptions = FALSE,
-        markerOptions = TRUE,
-        circleMarkerOptions = FALSE,
-        singleFeature = TRUE,
-        editOptions = editToolbarOptions()
-      )
+      ))
+      if(toolbar1)
+        leaf <- leaf %>%
+          addDrawToolbar(
+            polylineOptions = FALSE,
+            polygonOptions = FALSE,
+            rectangleOptions = FALSE,
+            circleOptions = FALSE,
+            markerOptions = TRUE,
+            circleMarkerOptions = FALSE,
+            singleFeature = TRUE,
+            editOptions = editToolbarOptions()
+          )
+      leaf
   })
-
- # observe({if(!is.null(input$lat)) {
-  #    print("hello")
-   #   map <- leafletProxy("mapdata")
-   #   lat <- input$lat
-   #   long <- input$long
-   #   map %>% addMarkers(lat,long)
-   # }})
+  
+  #render map2 for when to plant
+  init2 <- function() renderLeaflet({
+    leaf <- leaflet() %>%
+      addTiles(options = tileOptions(opacity = 0.8)) %>%
+      setView(7.633763,51.97587, zoom = 4) %>%
+      addEasyButton(easyButton(
+        icon="fa-crosshairs", title="Locate Me",
+        onClick=JS("function(btn, map){ 
+                      map.locate({setView: true})
+                      .on('locationfound', function(e){  
+                          Shiny.setInputValue('lat2', e.latitude); //send latlong coordinates to Shiny
+                          Shiny.setInputValue('long2', e.longitude);
+                          Shiny.setInputValue('send2', Date.now()) //create unique value so that ObserveEvent gets triggered
+                      })
+                    }")
+      )) 
+      if(toolbar2)
+        leaf <- leaf %>%
+          addDrawToolbar(
+            polylineOptions = FALSE,
+            polygonOptions = FALSE,
+            rectangleOptions = FALSE,
+            circleOptions = FALSE,
+            markerOptions = TRUE,
+            circleMarkerOptions = FALSE,
+            singleFeature = TRUE,
+            editOptions = editToolbarOptions()
+          )
+      leaf
+  })
+  
 
   #observers for marker actions on map1
-  #observe new marker and save coordinates
+  #observe LocateMe button press. Remove existing marker from map, adds the new one and saves coordinates
+  observeEvent(input$send1, {
+    lat <- input$lat1
+    long <- input$long1
+    
+    #workaround to delete existing marker
+    toolbar1 <<- !toolbar1
+    output$map1 <- init1()
+    clearMarkers(leafletProxy('map1'))
+    toolbar1 <<- !toolbar1
+    output$map1 <- init1()
+    
+    leafletProxy("map1") %>% addMarkers(long,lat, label = paste0("I am here: ",long,",",lat,sep = '')) %>% setView(long,lat,zoom = 4)
+    print("Marker at Geolocation set")
+    coordinates1$long <- long
+    coordinates1$lat <- lat
+    
+  })
+  #observe new marker and save coordinates. Also deletes existing marker
   observeEvent(input$map1_draw_new_feature, {
+    clearMarkers(leafletProxy("map1"))
     draw1  <- input$map1_draw_new_feature
-    coordinates1$lat <- draw1$geometry$coordinates[[1]]
-    coordinates1$long <- draw1$geometry$coordinates[[2]]
-    print(coordinates1$lat)
-    print(coordinates1$long)
+    coordinates1$long <- draw1$geometry$coordinates[[1]]
+    coordinates1$lat <- draw1$geometry$coordinates[[2]]
   })
   
   #observe marker edit and update coordinates
   observeEvent(input$map1_draw_edited_features, {
     draw1  <- input$map1_draw_edited_features
-    coordinates1$lat <- draw1$features[[1]]$geometry$coordinates[[1]]
-    coordinates1$long <- draw1$features[[1]]$geometry$coordinates[[2]]
-    print(coordinates1$lat)
-    print(coordinates1$long)
+    coordinates1$long <- draw1$features[[1]]$geometry$coordinates[[1]]
+    coordinates1$lat <- draw1$features[[1]]$geometry$coordinates[[2]]
   })
   #observe marker delete and set coordinates to null
   observeEvent(input$map1_draw_deleted_features, {
-    coordinates1$lat <- NULL
     coordinates1$long <- NULL
-    print(coordinates1$lat)
-    print(coordinates1$long)
+    coordinates1$lat <- NULL
   })
   
   
+
   #observers for marker actions on map2
-  #observe new marker and save coordinates
+  #observe LocateMe button press. Remove existing marker from map, adds the new one and saves coordinates
+  observeEvent(input$send2, {
+    lat <- input$lat2
+    long <- input$long2
+    
+    #workaround to delete existing marker
+    toolbar2 <<- !toolbar2
+    output$map2 <- init2()
+    clearMarkers(leafletProxy('map2'))
+    toolbar2 <<- !toolbar2
+    output$map2 <- init2()
+      
+    leafletProxy("map2") %>% addMarkers(long,lat, label = paste0("I am here: ",long,",",lat,sep = '')) %>% setView(long,lat,zoom = 4)
+    print("Marker at Geolocation set")
+    coordinates2$long <- long
+    coordinates2$lat <- lat  
+  })
+  #observe new marker and save coordinates. Also deletes existing marker
   observeEvent(input$map2_draw_new_feature, {
+    clearMarkers(leafletProxy("map2"))
     draw2  <- input$map2_draw_new_feature
-    coordinates2$lat <- draw2$geometry$coordinates[[1]]
-    coordinates2$long <- draw2$geometry$coordinates[[2]]
-    print(coordinates2$lat)
-    print(coordinates2$long)
+    coordinates2$long <- draw2$geometry$coordinates[[1]]
+    coordinates2$lat <- draw2$geometry$coordinates[[2]]
   })
   
   #observe marker edit and update coordinates
   observeEvent(input$map2_draw_edited_features, {
     draw2  <- input$map2_draw_edited_features
-    coordinates2$lat <- draw2$features[[1]]$geometry$coordinates[[1]]
-    coordinates2$long <- draw2$features[[1]]$geometry$coordinates[[2]]
-    print(coordinates2$lat)
-    print(coordinates2$long)
+    coordinates2$long <- draw2$features[[1]]$geometry$coordinates[[1]]
+    coordinates2$lat <- draw2$features[[1]]$geometry$coordinates[[2]]
   })
   #observe marker delete and set coordinates to null
   observeEvent(input$map2_draw_deleted_features, {
-    coordinates2$lat <- NULL
     coordinates2$long <- NULL
-    print(coordinates2$lat)
-    print(coordinates2$long)
+    coordinates2$lat <- NULL
   })
   
-  
-  
-  #map on page "what to plant"
-  output$map1 <- renderLeaflet({ mapdata() })
-  #map on page "when to plant"
-  output$map2 <- renderLeaflet({ mapdata() })
-  #
-  
+  output$map1 <- init1()
+  output$map2 <- init2()
   
   #map section end
   
@@ -416,7 +440,7 @@ server <- function(input, output, session) {
                  'Dfb', 'Dfc', 'Dfd', 'ET', 'EF')
     
     user_clim <- classif[n_clim]
-    print("in climate()")
+    print("The user climate is: ")
     print(user_clim)
     return (user_clim)
     
@@ -428,9 +452,9 @@ server <- function(input, output, session) {
   range <- 1:number_of_rows_in_dataset
   Months<-c("January","February","March","April","May","June","July","August","September","October","November","December")
   
-  filter_wtp <- function(plant, space, clim){
+  when_to_plant <- function(plant, space, clim){
     
-    print("in filter_wtp()")
+    print("in when_to_plant")
     output_array <- vector()
     output_array_days <- vector()
     for(n in range){
@@ -468,6 +492,7 @@ server <- function(input, output, session) {
 
 what_to_plant <- function(climate, date_to_plant, date_to_harvest, size, plot = FALSE ) {
   
+  print("in what_to_plant")
   # read jointly created vegetables table
   plants <- read.table("src/20211214-plants-scraped.csv", sep = ',', header = T)
   
