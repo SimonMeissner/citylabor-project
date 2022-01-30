@@ -93,7 +93,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                 Also take in consideration that extreme input values probably won't result in many suggested plants. 
                                 For the best results provide spaces around a few squaremeters and harvest-to-plant ranges of around 4-6 months."),
                                 
-                                verbatimTextOutput("plants"),
+                                tableOutput("plants"),
                                 
                                 
                                 
@@ -263,7 +263,9 @@ server <- function(input, output, session) {
   
   
   # page what to plant
-  output$plants <- renderText( data1())
+  output$plants <- renderUI({
+    DT::renderDataTable({datatable(data1(), options= list(paging= TRUE, searching= TRUE), colnames=c("recommended plants", "links for more information"), escape = FALSE)})
+  })
   
   
   # page when to plant
@@ -670,15 +672,22 @@ what_to_plant <- function(climate, date_to_plant, date_to_harvest, size, plot = 
     prd <- prd[order(-prd$surv_p), ]
     
     r = c()
+    p = vector()
+    l = vector()
     for (i in 1:nrow(prd)){
       r[i] = paste(
         prd[i, 1], ":",
         "Visit ", prd[i, 2], "for more information", 
         "\n\n"
-      ) 
+      )
+      p = append(p, prd[i,1])
+      url = a("Find more information here", href=prd[i,2])
+      l = append(l, HTML(paste(url)))
     }
   }
-  return(r)
+  df<-data.frame(p,l)
+  return(df)
+  #return(r)
 }
 
 # Create Shiny object
