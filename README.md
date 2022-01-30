@@ -1,6 +1,6 @@
 # citylabor-project
 
-This repository contains the project of the cityLabor seminar course at WWWU Münster WiSe 21/22
+This repository contains the project of the cityLabor seminar course at WWU Münster WiSe 21/22
 
 ## Project Information
 
