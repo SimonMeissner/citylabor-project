@@ -182,12 +182,14 @@ server <- function(input, output, session) {
   
   data1 <- eventReactive(input$data1, {
     
-    
+    #computation starts if marker is on the map and space is set
     if(!is.null(coordinates1$lat) && !is.null(coordinates1$long) && input$space1 > 0 ) { #add check if timeframe isset
       
       print("Submit successful!")
       
+      #get climate from user based on coordinates
       climate <- climate("src/climate.tif", coordinates1$long, coordinates1$lat)
+      #what_to_plant
       return(what_to_plant(climate, input$growthrange[1], input$growthrange[2], input$space1, plot= FALSE))
       
     }
@@ -209,15 +211,13 @@ server <- function(input, output, session) {
   
   data2 <- eventReactive(input$data2, {
     
-    #if marker is on the map coordinates2 are not NULL and computation starts
+    #computation starts if marker is on the map and a plant and space are set
     if(!is.null(coordinates2$lat) && !is.null(coordinates2$long) && (input$space2 > 0) && !is.null(input$plant)) {
       
       print("Submit successful!")
       
       #get climate from user based on coordinates
       climate <- climate("src/climate.tif", coordinates2$long, coordinates2$lat)
-      
-      
       #when_to_plant
       return(when_to_plant(plant= input$plant, space=input$space2, clim=climate))
       
