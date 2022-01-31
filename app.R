@@ -163,7 +163,13 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                               a(actionButton(inputId = "website", label = " https://gardenplanner.almanac.com/", 
                                              icon = icon("fas fa-seedling", lib = "font-awesome")),
                                 href="https://gardenplanner.almanac.com/plants/us-and-canada/"),
-                            )
+                            ),
+                            h1("Want to know more?"),
+                            p("In case you are interested in how our app works in detail, feel free to check out the code. \n
+                              The full source code and documentation is available in the following GitHub repository:"),
+                            a(actionButton(inputId = "website", label = "GitHub repo", 
+                                           icon = icon("code", lib = "font-awesome", verify_fa=FALSE)),
+                              href="https://github.com/SimonMeissner/citylabor-project"),
                             
                             
                   )
