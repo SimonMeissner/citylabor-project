@@ -8,7 +8,7 @@ In this project, a web application was developed for urban gardeners. It aims to
 
 ## Motivation
 
-New people who are trying to get into the urban gardening world often dont have a background in this field and lack the knowledge of how to grow their desired plants. This is a difficult issue, because growing plants is a problem which requires awareness of many parameters such as e.g. the available space and climate influence. Our application makes it easy and intuitive for users to make important decisions in terms of what and when to plant. Just by specifying some fields the user gets an overview of what is possible for his location and can choose from our recommendations. Users of our application need no preliminary experience with growing plants and are able to inform themselves in a very quick and easy manner. 
+New people who are trying to get into the urban gardening world often don't have a background in this field and lack the knowledge of how to grow their desired plants. This is a difficult issue, because growing plants is an activity that requires awareness of many parameters, such as e.g. the available space and climate influence. Our application makes it easy and intuitive for users to make important decisions in terms of what and when to plant. Just by specifying some fields the user gets an overview of what is possible for his location and can choose from our recommendations. Users of our application need no preliminary experience with growing plants and are able to inform themselves in a very quick and easy manner. 
 
 ## Contributors
 
